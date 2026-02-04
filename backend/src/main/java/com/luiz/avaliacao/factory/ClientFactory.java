@@ -1,10 +1,11 @@
 package com.luiz.avaliacao.factory;
 
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
+
 import com.luiz.avaliacao.domain.Address;
 import com.luiz.avaliacao.domain.Client;
 import com.luiz.avaliacao.dtos.ClientRequestDTO;
-import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClient;
 
 @Component
 public class ClientFactory {
@@ -27,7 +28,7 @@ public class ClientFactory {
                 .build();
     }
 
-    private Address buscarEnderecoPorCep(String cep) {
+    public Address buscarEnderecoPorCep(String cep) {
         // Chamada externa ao ViaCEP
         String url = "https://viacep.com.br/ws/" + cep + "/json/";
         
