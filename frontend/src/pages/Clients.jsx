@@ -6,7 +6,8 @@ function Clients() {
   const [clients, setClients] = useState([]);
   const [form, setForm] = useState({ id: null, name: '', cpf: '', cep: '' });
   const [errorMessage, setErrorMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false); // <--- NOVO: Estado de Carregamento
+  const [isLoading, setIsLoading] = useState(false);
+  const [animate, setAnimate] = useState(false);
   const navigate = useNavigate();
   
   const token = localStorage.getItem('token');
@@ -18,6 +19,7 @@ function Clients() {
       return;
     }
     loadClients();
+    setAnimate(true);
   }, []);
 
   const loadClients = async () => {
@@ -29,63 +31,46 @@ function Clients() {
     }
   };
 
-  // --- NOVA FUNÇÃO DE VALIDAÇÃO MANUAL ---
   const validateForm = () => {
-    // 1. Valida CPF
-    // Remove qualquer coisa que não seja número para testar
     if (!/^\d+$/.test(form.cpf)) {
-      setErrorMessage('O CPF deve conter apenas números (sem pontos ou traços).');
+      setErrorMessage('O CPF deve conter apenas números.');
       return false;
     }
     if (form.cpf.length !== 11) {
-      setErrorMessage(`CPF incompleto: Você digitou ${form.cpf.length} dígitos, mas são necessários 11.`);
+      setErrorMessage(`CPF incompleto: faltam ${11 - form.cpf.length} dígitos.`);
       return false;
     }
-
-    // 2. Valida CEP
     if (!/^\d+$/.test(form.cep)) {
       setErrorMessage('O CEP deve conter apenas números.');
       return false;
     }
     if (form.cep.length !== 8) {
-      setErrorMessage('O CEP deve ter exatamente 8 dígitos.');
+      setErrorMessage('O CEP deve ter 8 dígitos.');
       return false;
     }
-
-    return true; // Passou em tudo!
+    return true;
   };
 
   const handleSave = async (e) => {
     e.preventDefault();
     setErrorMessage('');
-    
-    // Roda a validação antes de chamar o servidor
     if (!validateForm()) return;
 
-    setIsLoading(true); // <--- ATIVA O LOADING
-
+    setIsLoading(true);
     try {
       if (form.id) {
         await axios.put(`/clients/${form.id}`, form, authConfig);
       } else {
         await axios.post('/clients', form, authConfig);
       }
-      
-      // Sucesso
       setForm({ id: null, name: '', cpf: '', cep: '' });
       loadClients();
     } catch (error) {
-      // Tenta pegar a mensagem específica do Java (String), se for objeto genérico, usa fallback
       let msgBackend = error.response?.data;
-      
-      // Às vezes o Spring manda um JSON complexo de erro de validação (@Valid)
-      if (typeof msgBackend === 'object') {
-        msgBackend = "Erro de validação. Verifique se os dados estão no formato correto.";
-      }
-      
+      if (typeof msgBackend === 'object') msgBackend = "Erro de validação nos dados.";
       setErrorMessage(msgBackend || 'Erro ao conectar com o servidor.');
     } finally {
-      setIsLoading(false); // <--- DESATIVA O LOADING (Dando certo ou errado)
+      setIsLoading(false);
     }
   };
 
@@ -112,6 +97,7 @@ function Clients() {
       cpf: client.cpf, 
       cep: client.cep || '' 
     });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleLogout = () => {
@@ -120,108 +106,314 @@ function Clients() {
   };
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'Arial', maxWidth: '900px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h1 style={{ color: '#FFF' }}>Gestão de Clientes</h1>
-        <button onClick={handleLogout} style={{ background: '#d9534f', color: 'white', border: 'none', padding: '8px 12px', cursor: 'pointer', borderRadius: '4px' }}>Sair</button>
-      </div>
-
-      {/* FORMULÁRIO */}
-      <div style={{ background: '#222', padding: '25px', borderRadius: '8px', marginBottom: '30px', border: '1px solid #444' }}>
-        <h3 style={{ marginTop: 0, color: '#FFF', marginBottom: '15px' }}>{form.id ? 'Editar Cliente' : 'Novo Cliente'}</h3>
-        
-        <form onSubmit={handleSave} style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
-          <input 
-            placeholder="Nome Completo" 
-            value={form.name} 
-            onChange={e => setForm({...form, name: e.target.value})} 
-            required 
-            disabled={isLoading} // Trava enquanto carrega
-            style={{ padding: '12px', flex: 2, minWidth: '200px', borderRadius: '4px', border: '1px solid #555', background: '#333', color: '#FFF' }} 
-          />
-          <input 
-            placeholder="CPF (apenas números)" 
-            value={form.cpf} 
-            onChange={e => setForm({...form, cpf: e.target.value})} 
-            required 
-            disabled={isLoading}
-            maxLength={11}
-            style={{ padding: '12px', flex: 1, minWidth: '120px', borderRadius: '4px', border: '1px solid #555', background: '#333', color: '#FFF' }}
-          />
-          <input 
-            placeholder="CEP" 
-            value={form.cep} 
-            onChange={e => setForm({...form, cep: e.target.value})} 
-            required 
-            disabled={isLoading}
-            maxLength={8}
-            style={{ padding: '12px', width: '100px', borderRadius: '4px', border: '1px solid #555', background: '#333', color: '#FFF' }}
-          />
+    <div style={styles.pageContainer}>
+      <style>
+        {`
+          @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          .card-hover:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important;
+          }
+          .input-modern:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+            outline: none;
+          }
           
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button 
-              type="submit" 
-              disabled={isLoading} // Desabilita o botão para evitar clique duplo
-              style={{ 
-                background: isLoading ? '#555' : '#28a745', // Fica cinza se estiver carregando
-                color: 'white', 
-                border: 'none', 
-                padding: '12px 25px', 
-                cursor: isLoading ? 'not-allowed' : 'pointer', 
-                borderRadius: '4px', 
-                fontWeight: 'bold',
-                minWidth: '120px'
-              }}>
-              {isLoading ? '⏳ Processando...' : (form.id ? 'SALVAR' : 'CADASTRAR')}
-            </button>
+          /* Novos estilos para os ícones */
+          .icon-btn {
+            background: transparent;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+            display: flex;
+            alignItems: center;
+            justifyContent: center;
+          }
+          .icon-btn:hover {
+             background-color: rgba(0,0,0,0.05);
+             transform: scale(1.1);
+          }
+          .edit-btn { color: #ffc107; } /* Amarelo padrão */
+          .edit-btn:hover { color: #e0a800; } /* Amarelo mais escuro no hover */
+          
+          .delete-btn { color: #dc3545; } /* Vermelho padrão */
+          .delete-btn:hover { color: #c82333; } /* Vermelho mais escuro no hover */
+        `}
+      </style>
+
+      {/* REMOVIDO O maxWidth, agora ocupa 100% */}
+      <div style={{ width: '100%' }}>
+        
+        {/* CABEÇALHO */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          marginBottom: '30px',
+          opacity: animate ? 1 : 0,
+          transition: 'opacity 0.5s ease-in'
+        }}>
+          <div>
+            <h1 style={{ color: '#333', margin: 0, fontSize: '28px' }}>Gestão de Clientes</h1>
+            <p style={{ color: '#666', margin: '5px 0 0 0' }}>Gerencie sua base de contatos</p>
+          </div>
+          <button onClick={handleLogout} style={styles.logoutButton}>
+            Sair
+          </button>
+        </div>
+
+        {/* CARD DO FORMULÁRIO */}
+        <div style={{ 
+          ...styles.card, 
+          borderLeft: '5px solid #007bff',
+          animation: 'slideDown 0.6s ease-out forwards'
+        }}>
+          <h3 style={{ marginTop: 0, color: '#444', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {form.id ? '✏️ Editando Cliente' : '✨ Novo Cadastro'}
+          </h3>
+          
+          <form onSubmit={handleSave} style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            <div style={{ flex: 2, minWidth: '300px' }}>
+              <label style={styles.label}>Nome Completo</label>
+              <input 
+                className="input-modern"
+                placeholder="Ex: João da Silva" 
+                value={form.name} 
+                onChange={e => setForm({...form, name: e.target.value})} 
+                required 
+                disabled={isLoading} 
+                style={styles.input} 
+              />
+            </div>
+
+            <div style={{ flex: 1, minWidth: '180px' }}>
+              <label style={styles.label}>CPF (só números)</label>
+              <input 
+                className="input-modern"
+                placeholder="000.000.000-00" 
+                value={form.cpf} 
+                onChange={e => setForm({...form, cpf: e.target.value})} 
+                required 
+                disabled={isLoading}
+                maxLength={11}
+                style={styles.input}
+              />
+            </div>
+
+            <div style={{ width: '140px' }}>
+              <label style={styles.label}>CEP</label>
+              <input 
+                className="input-modern"
+                placeholder="00000-000" 
+                value={form.cep} 
+                onChange={e => setForm({...form, cep: e.target.value})} 
+                required 
+                disabled={isLoading}
+                maxLength={8}
+                style={styles.input}
+              />
+            </div>
             
-            {form.id && (
-              <button type="button" disabled={isLoading} onClick={() => { setForm({ id: null, name: '', cpf: '', cep: '' }); setErrorMessage(''); }} style={{ background: '#6c757d', color: 'white', border: 'none', padding: '12px', cursor: 'pointer', borderRadius: '4px' }}>
-                Cancelar
+            <div style={{ display: 'flex', gap: '10px', paddingBottom: '1px' }}>
+              <button 
+                type="submit" 
+                disabled={isLoading} 
+                style={{ 
+                  ...styles.primaryButton, 
+                  background: isLoading ? '#ccc' : (form.id ? '#ffc107' : '#28a745'),
+                  color: form.id ? '#000' : '#fff'
+                }}>
+                {isLoading ? 'Salvando...' : (form.id ? 'Salvar' : 'Cadastrar')}
               </button>
-            )}
-          </div>
-        </form>
+              
+              {form.id && (
+                <button type="button" disabled={isLoading} onClick={() => { setForm({ id: null, name: '', cpf: '', cep: '' }); setErrorMessage(''); }} style={styles.secondaryButton}>
+                  Cancelar
+                </button>
+              )}
+            </div>
+          </form>
 
-        {/* MENSAGEM DE ERRO VISUAL */}
-        {errorMessage && (
-          <div style={{ marginTop: '15px', color: '#ff6b6b', background: 'rgba(255,0,0,0.1)', padding: '10px', borderRadius: '4px', border: '1px solid #ff6b6b' }}>
-            ⚠️ {errorMessage}
-          </div>
-        )}
-      </div>
+          {errorMessage && (
+            <div style={styles.errorBox}>
+              ⚠️ {errorMessage}
+            </div>
+          )}
+        </div>
 
-      {/* LISTA DE CLIENTES */}
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {clients.map(client => (
-          <li key={client.id} style={{ 
-              background: 'white', 
-              padding: '20px', 
-              marginBottom: '15px', 
-              borderRadius: '8px', 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center',
-              boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
-              color: '#000',
-              opacity: isLoading ? 0.5 : 1 // Dá um efeito visual na lista quando está carregando
-          }}>
-            <div>
-              <strong style={{ fontSize: '1.2em', color: '#000' }}>{client.name}</strong> 
-              <span style={{ color: '#555', marginLeft: '10px', fontSize: '0.9em' }}>(CPF: {client.cpf})</span>
-              <div style={{ color: '#444', marginTop: '8px' }}>
-                 📍 {client.logradouro}, {client.bairro} - {client.cidade}/{client.uf}
+        {/* LISTA DE CLIENTES */}
+        <h3 style={{ color: '#555', marginTop: '40px', marginBottom: '20px', paddingLeft: '5px', fontSize: '22px' }}>
+          Clientes Cadastrados ({clients.length})
+        </h3>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          {clients.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '50px', color: '#999', background: '#fff', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
+              <h3>Nenhum cliente encontrado.</h3>
+              <p>Utilize o formulário acima para cadastrar o primeiro.</p>
+            </div>
+          )}
+
+          {clients.map((client, index) => (
+            <div 
+              key={client.id} 
+              className="card-hover"
+              style={{ 
+                ...styles.clientCard,
+                animation: `fadeUp 0.5s ease-out forwards ${index * 0.1}s`,
+                opacity: 0 
+              }}>
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                <div style={styles.avatar}>
+                  {client.name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <strong style={{ fontSize: '18px', color: '#333', display: 'block', marginBottom: '4px' }}>{client.name}</strong> 
+                  <span style={{ color: '#888', fontSize: '14px', background: '#f0f0f0', padding: '2px 8px', borderRadius: '4px' }}>CPF: {client.cpf}</span>
+                  <div style={{ color: '#555', marginTop: '8px', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                     📍 {client.logradouro}, {client.bairro} - {client.cidade}/{client.uf}
+                  </div>
+                </div>
+              </div>
+
+              {/* NOVOS ÍCONES MAIS LIMPOS */}
+              <div style={{ display: 'flex', gap: '5px' }}>
+                <button disabled={isLoading} onClick={() => handleEdit(client)} className="icon-btn edit-btn" title="Editar">
+                  ✏️
+                </button>
+                <button disabled={isLoading} onClick={() => handleDelete(client.id)} className="icon-btn delete-btn" title="Excluir">
+                  🗑️
+                </button>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button disabled={isLoading} onClick={() => handleEdit(client)} style={{ background: '#ffc107', color: '#000', border: 'none', padding: '8px 15px', cursor: 'pointer', borderRadius: '4px', fontWeight: 'bold' }}>✏️ Editar</button>
-              <button disabled={isLoading} onClick={() => handleDelete(client.id)} style={{ background: '#dc3545', color: 'white', border: 'none', padding: '8px 15px', cursor: 'pointer', borderRadius: '4px', fontWeight: 'bold' }}>🗑️ Excluir</button>
-            </div>
-          </li>
-        ))}
-      </ul>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
+
+// ESTILOS ATUALIZADOS
+const styles = {
+ pageContainer: {
+    minHeight: '100vh',
+    width: '100%', // Garante largura total
+    background: '#f0f2f5', 
+    padding: '40px 5%', 
+    fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    display: 'flex',
+    justifyContent: 'center',
+    boxSizing: 'border-box', // Importante para o padding não estourar a tela
+    position: 'absolute', // Força a cobrir tudo
+    top: 0,
+    left: 0,
+    right: 0
+  },
+  card: {
+    background: '#ffffff',
+    padding: '35px', // Mais espaçamento interno
+    borderRadius: '12px',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.06)', // Sombra mais difusa
+    marginBottom: '40px',
+  },
+  label: {
+    display: 'block',
+    fontSize: '13px',
+    fontWeight: 'bold',
+    color: '#555',
+    marginBottom: '8px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+  },
+  input: {
+    width: '100%',
+    padding: '14px', // Inputs mais altos
+    borderRadius: '8px',
+    border: '1px solid #e0e0e0',
+    fontSize: '16px',
+    color: '#333',
+    background: '#f9f9f9',
+    transition: 'all 0.3s',
+  },
+  primaryButton: {
+    padding: '14px 30px',
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '16px',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    transition: 'filter 0.2s',
+    height: '50px', // Botão mais alto
+  },
+  secondaryButton: {
+    padding: '14px 25px',
+    border: '1px solid #ccc',
+    background: 'transparent',
+    color: '#666',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    height: '50px',
+    fontWeight: 'bold',
+  },
+  logoutButton: {
+    background: '#ffebec',
+    color: '#d63031',
+    border: 'none',
+    padding: '12px 25px',
+    borderRadius: '30px',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    boxShadow: '0 2px 5px rgba(214, 48, 49, 0.2)',
+  },
+  clientCard: {
+    background: '#ffffff',
+    padding: '25px',
+    borderRadius: '12px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+    border: '1px solid #f0f0f0',
+    transition: 'all 0.3s ease',
+  },
+  avatar: {
+    width: '55px',
+    height: '55px',
+    borderRadius: '50%',
+    background: 'linear-gradient(135deg, #6B73FF 0%, #000DFF 100%)', // Gradiente moderno
+    color: '#fff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontWeight: 'bold',
+    fontSize: '22px',
+    boxShadow: '0 4px 10px rgba(0, 13, 255, 0.2)',
+  },
+  errorBox: {
+    marginTop: '20px',
+    background: '#ffebee',
+    color: '#c62828',
+    padding: '15px',
+    borderRadius: '8px',
+    fontSize: '15px',
+    borderLeft: '5px solid #c62828',
+    display: 'flex',
+    alignItems: 'center',
+    fontWeight: '500',
+  }
+};
 
 export default Clients;
