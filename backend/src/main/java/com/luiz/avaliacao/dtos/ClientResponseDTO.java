@@ -1,6 +1,7 @@
 package com.luiz.avaliacao.dtos;
 
 import com.luiz.avaliacao.domain.Client;
+
 import lombok.Data;
 
 @Data
@@ -12,8 +13,8 @@ public class ClientResponseDTO {
     private String bairro;
     private String cidade;
     private String uf;
+    private String cep; 
 
-    // Construtor que converte a Entidade Client para DTO
     public ClientResponseDTO(Client client) {
         this.id = client.getId();
         this.name = client.getName();
@@ -23,6 +24,7 @@ public class ClientResponseDTO {
             this.bairro = client.getAddress().getBairro();
             this.cidade = client.getAddress().getLocalidade();
             this.uf = client.getAddress().getUf();
+            this.cep = client.getAddress().getCep(); 
         }
     }
 }

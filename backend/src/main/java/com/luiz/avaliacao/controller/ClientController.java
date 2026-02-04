@@ -33,15 +33,18 @@ public class ClientController {
 
     // 1. CRIAR (POST)
     @PostMapping
-    public ResponseEntity<ClientResponseDTO> create(@RequestBody @Valid ClientRequestDTO data) {
-        if (repository.existsByCpf(data.getCpf())) {
-            return ResponseEntity.badRequest().build(); 
+    public ResponseEntity<?> create(@RequestBody @Valid ClientRequestDTO data) {
+        try {
+            if (repository.existsByCpf(data.getCpf())) {
+                return ResponseEntity.badRequest().body("Este CPF já está cadastrado.");
+            }
+            Client newClient = clientFactory.createClient(data);
+            repository.save(newClient);
+            return ResponseEntity.ok(new ClientResponseDTO(newClient));
+        } catch (RuntimeException e) {
+            // Captura o erro do CEP e devolve como texto (Bad Request)
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-
-        Client newClient = clientFactory.createClient(data);
-        repository.save(newClient);
-
-        return ResponseEntity.ok(new ClientResponseDTO(newClient));
     }
 
     // 2. LISTAR TUDO (GET)
@@ -55,27 +58,28 @@ public class ClientController {
 
     // 3. ATUALIZAR (PUT) - O que faltava para o botão "Editar" funcionar
     @PutMapping("/{id}")
-    public ResponseEntity<ClientResponseDTO> update(@PathVariable Long id, @RequestBody @Valid ClientRequestDTO data) {
-        // Busca o cliente ou dá erro
-        Client client = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Cliente não encontrado"));
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody @Valid ClientRequestDTO data) {
+        try {
+            Client client = repository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Cliente não encontrado"));
 
-        // Verifica se mudou o CPF e se o novo já existe
-        if (!client.getCpf().equals(data.getCpf()) && repository.existsByCpf(data.getCpf())) {
-            return ResponseEntity.badRequest().build();
+            if (!client.getCpf().equals(data.getCpf()) && repository.existsByCpf(data.getCpf())) {
+                return ResponseEntity.badRequest().body("Este CPF já está em uso.");
+            }
+
+            client.setName(data.getName());
+            client.setCpf(data.getCpf());
+
+            // Se o CEP mudar, tenta buscar o novo
+            if (client.getAddress() == null || !client.getAddress().getCep().equals(data.getCep())) {
+                client.setAddress(clientFactory.buscarEnderecoPorCep(data.getCep()));
+            }
+
+            repository.save(client);
+            return ResponseEntity.ok(new ClientResponseDTO(client));
+        } catch (RuntimeException e) {
+             return ResponseEntity.badRequest().body(e.getMessage());
         }
-
-        // Atualiza dados básicos
-        client.setName(data.getName());
-        client.setCpf(data.getCpf());
-
-        // Lógica inteligente: Só busca no ViaCEP se o CEP mudou!
-        if (client.getAddress() == null || !client.getAddress().getCep().equals(data.getCep())) {
-             client.setAddress(clientFactory.buscarEnderecoPorCep(data.getCep()));
-        }
-
-        repository.save(client);
-        return ResponseEntity.ok(new ClientResponseDTO(client));
     }
 
     // 4. DELETAR (DELETE) - O que faltava para o botão "Excluir" funcionar
