@@ -20,12 +20,17 @@ public class RefreshTokenService {
     private UserRepository userRepository;
 
     public RefreshToken createRefreshToken(String userId) {
-        
-        RefreshToken refreshToken = RefreshToken.builder()
-                .user(userRepository.findById(userId).get())
-                .token(UUID.randomUUID().toString())
-                .expiryDate(Instant.now().plusMillis(6000000)) 
-                .build();
+        var user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+
+        RefreshToken refreshToken = refreshTokenRepository.findByUser(user)
+                .orElse(new RefreshToken());
+
+        refreshToken.setUser(user);
+        refreshToken.setToken(UUID.randomUUID().toString());
+        refreshToken.setExpiryDate(Instant.now().plusMillis(6000000)); 
+
         return refreshTokenRepository.save(refreshToken);
     }
 
