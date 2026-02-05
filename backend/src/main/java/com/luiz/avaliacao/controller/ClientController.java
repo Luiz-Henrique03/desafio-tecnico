@@ -67,7 +67,7 @@ public class ClientController {
             client.setCpf(data.getCpf());
 
             if (client.getAddress() == null || !client.getAddress().getCep().equals(data.getCep())) {
-                client.setAddress(clientFactory.buscarEnderecoPorCep(data.getCep()));
+                client.setAddress(clientFactory.GetAdressByCEP(data.getCep()));
             }
 
             repository.save(client);

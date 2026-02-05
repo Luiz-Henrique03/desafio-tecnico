@@ -18,7 +18,7 @@ public class ClientFactory {
 
     public Client createClient(ClientRequestDTO data) {
 
-        Address address = buscarEnderecoPorCep(data.getCep());
+        Address address = GetAdressByCEP(data.getCep());
 
         return Client.builder()
                 .name(data.getName())
@@ -27,7 +27,7 @@ public class ClientFactory {
                 .build();
     }
 
-    public Address buscarEnderecoPorCep(String cep) {
+    public Address GetAdressByCEP(String cep) {
 
         String url = "https://viacep.com.br/ws/" + cep + "/json/";
         
