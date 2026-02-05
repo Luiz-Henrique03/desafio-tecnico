@@ -114,9 +114,20 @@ function Clients() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+
+      const refreshToken = localStorage.getItem('refreshToken'); 
+      if (refreshToken) {
+         await axios.post('/auth/logout', { token: refreshToken }, authConfig);
+      }
+    } catch (error) {
+      console.error("Erro ao fazer logout no servidor", error);
+    } finally {
+      localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
+      navigate('/login');
+    }
   };
 
   return (

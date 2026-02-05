@@ -70,4 +70,10 @@ public class AuthenticationController {
                 })
                 .orElseThrow(() -> new RuntimeException("Refresh token inválido ou inexistente!"));
     }
+    
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@RequestBody @Valid RefreshRequestDTO body) {
+        refreshTokenService.deleteByToken(body.getToken());
+        return ResponseEntity.noContent().build();
+    }
 }
