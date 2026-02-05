@@ -4,9 +4,18 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
+    host: true, 
     proxy: {
-      '/auth': 'http://localhost:8080',
-      '/clients': 'http://localhost:8080'
+      '/auth': {
+        target: 'http://avaliacao-backend:8080', 
+        changeOrigin: true,
+        secure: false,
+      },
+      '/clients': {
+        target: 'http://avaliacao-backend:8080', 
+        changeOrigin: true,
+        secure: false,
+      }
     }
   }
 })
