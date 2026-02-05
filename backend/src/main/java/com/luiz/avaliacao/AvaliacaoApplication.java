@@ -17,6 +17,7 @@ public class AvaliacaoApplication {
 	}
 
 	@Bean
+    @SuppressWarnings("unused")
 	CommandLineRunner initDatabase(UserRepository userRepository, PasswordEncoder passwordEncoder) {
 		return args -> {
 			if (userRepository.findByLogin("admin") == null) {
