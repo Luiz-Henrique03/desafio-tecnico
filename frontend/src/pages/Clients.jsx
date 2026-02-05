@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 
 function Clients() {
   const [clients, setClients] = useState([]);
+  const [filteredClients, setFilteredClients] = useState([]); 
+  const [searchId, setSearchId] = useState(''); 
   const [form, setForm] = useState({ id: null, name: '', cpf: '', cep: '' });
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -22,10 +24,22 @@ function Clients() {
     setAnimate(true);
   }, []);
 
+  useEffect(() => {
+    if (searchId.trim() === '') {
+      setFilteredClients(clients);
+    } else {
+      const filtered = clients.filter(client => 
+        client.id.toString().includes(searchId)
+      );
+      setFilteredClients(filtered);
+    }
+  }, [searchId, clients]);
+
   const loadClients = async () => {
     try {
       const response = await axios.get('/clients', authConfig);
       setClients(response.data);
+      setFilteredClients(response.data); 
     } catch (error) {
       navigate('/login');
     }
@@ -127,7 +141,6 @@ function Clients() {
             outline: none;
           }
           
-          /* Novos estilos para os ícones */
           .icon-btn {
             background: transparent;
             border: none;
@@ -144,18 +157,16 @@ function Clients() {
              background-color: rgba(0,0,0,0.05);
              transform: scale(1.1);
           }
-          .edit-btn { color: #ffc107; } /* Amarelo padrão */
-          .edit-btn:hover { color: #e0a800; } /* Amarelo mais escuro no hover */
+          .edit-btn { color: #ffc107; }
+          .edit-btn:hover { color: #e0a800; }
           
-          .delete-btn { color: #dc3545; } /* Vermelho padrão */
-          .delete-btn:hover { color: #c82333; } /* Vermelho mais escuro no hover */
+          .delete-btn { color: #dc3545; } 
+          .delete-btn:hover { color: #c82333; }
         `}
       </style>
 
-      {/* REMOVIDO O maxWidth, agora ocupa 100% */}
       <div style={{ width: '100%' }}>
         
-        {/* CABEÇALHO */}
         <div style={{ 
           display: 'flex', 
           justifyContent: 'space-between', 
@@ -252,20 +263,34 @@ function Clients() {
           )}
         </div>
 
-        {/* LISTA DE CLIENTES */}
-        <h3 style={{ color: '#555', marginTop: '40px', marginBottom: '20px', paddingLeft: '5px', fontSize: '22px' }}>
-          Clientes Cadastrados ({clients.length})
-        </h3>
+        {/* ÁREA DE BUSCA E LISTAGEM */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '40px', marginBottom: '20px' }}>
+          <h3 style={{ color: '#555', margin: 0, paddingLeft: '5px', fontSize: '22px' }}>
+            Clientes ({filteredClients.length})
+          </h3>
+          
+          {/* CAMPO DE BUSCA NOVO */}
+          <div style={{ position: 'relative', width: '250px' }}>
+            <span style={{ position: 'absolute', left: '10px', top: '12px', fontSize: '18px' }}>🔍</span>
+            <input 
+              className="input-modern"
+              placeholder="Buscar por ID..." 
+              value={searchId}
+              onChange={e => setSearchId(e.target.value)}
+              style={{ ...styles.input, paddingLeft: '35px', height: '45px' }}
+            />
+          </div>
+        </div>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          {clients.length === 0 && (
+          {filteredClients.length === 0 && (
             <div style={{ textAlign: 'center', padding: '50px', color: '#999', background: '#fff', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
               <h3>Nenhum cliente encontrado.</h3>
-              <p>Utilize o formulário acima para cadastrar o primeiro.</p>
+              <p>{searchId ? `Nenhum registro com ID contendo "${searchId}"` : 'Utilize o formulário acima para cadastrar.'}</p>
             </div>
           )}
 
-          {clients.map((client, index) => (
+          {filteredClients.map((client, index) => (
             <div 
               key={client.id} 
               className="card-hover"
@@ -280,15 +305,21 @@ function Clients() {
                   {client.name.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <strong style={{ fontSize: '18px', color: '#333', display: 'block', marginBottom: '4px' }}>{client.name}</strong> 
-                  <span style={{ color: '#888', fontSize: '14px', background: '#f0f0f0', padding: '2px 8px', borderRadius: '4px' }}>CPF: {client.cpf}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <strong style={{ fontSize: '18px', color: '#333' }}>{client.name}</strong>
+                    <span style={{ fontSize: '12px', background: '#e3f2fd', color: '#0d47a1', padding: '2px 8px', borderRadius: '10px', fontWeight: 'bold' }}>
+                      ID: {client.id}
+                    </span>
+                  </div>
+                  <span style={{ color: '#888', fontSize: '14px', background: '#f0f0f0', padding: '2px 8px', borderRadius: '4px', marginTop: '4px', display: 'inline-block' }}>
+                    CPF: {client.cpf}
+                  </span>
                   <div style={{ color: '#555', marginTop: '8px', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '5px' }}>
                      📍 {client.logradouro}, {client.bairro} - {client.cidade}/{client.uf}
                   </div>
                 </div>
               </div>
 
-              {/* NOVOS ÍCONES MAIS LIMPOS */}
               <div style={{ display: 'flex', gap: '5px' }}>
                 <button disabled={isLoading} onClick={() => handleEdit(client)} className="icon-btn edit-btn" title="Editar">
                   ✏️
@@ -305,27 +336,26 @@ function Clients() {
   );
 }
 
-// ESTILOS ATUALIZADOS
 const styles = {
- pageContainer: {
+  pageContainer: {
     minHeight: '100vh',
-    width: '100%', // Garante largura total
+    width: '100%', 
     background: '#f0f2f5', 
     padding: '40px 5%', 
     fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
     display: 'flex',
     justifyContent: 'center',
-    boxSizing: 'border-box', // Importante para o padding não estourar a tela
-    position: 'absolute', // Força a cobrir tudo
+    boxSizing: 'border-box', 
+    position: 'absolute', 
     top: 0,
     left: 0,
     right: 0
   },
   card: {
     background: '#ffffff',
-    padding: '35px', // Mais espaçamento interno
+    padding: '35px', 
     borderRadius: '12px',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.06)', // Sombra mais difusa
+    boxShadow: '0 4px 20px rgba(0,0,0,0.06)', 
     marginBottom: '40px',
   },
   label: {
@@ -339,7 +369,7 @@ const styles = {
   },
   input: {
     width: '100%',
-    padding: '14px', // Inputs mais altos
+    padding: '14px', 
     borderRadius: '8px',
     border: '1px solid #e0e0e0',
     fontSize: '16px',
@@ -355,7 +385,7 @@ const styles = {
     fontWeight: 'bold',
     cursor: 'pointer',
     transition: 'filter 0.2s',
-    height: '50px', // Botão mais alto
+    height: '50px', 
   },
   secondaryButton: {
     padding: '14px 25px',
@@ -393,7 +423,7 @@ const styles = {
     width: '55px',
     height: '55px',
     borderRadius: '50%',
-    background: 'linear-gradient(135deg, #6B73FF 0%, #000DFF 100%)', // Gradiente moderno
+    background: 'linear-gradient(135deg, #6B73FF 0%, #000DFF 100%)', 
     color: '#fff',
     display: 'flex',
     alignItems: 'center',

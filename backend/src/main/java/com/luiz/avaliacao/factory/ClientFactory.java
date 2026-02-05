@@ -17,19 +17,18 @@ public class ClientFactory {
     }
 
     public Client createClient(ClientRequestDTO data) {
-        // 1. Busca o endereço no ViaCEP
+
         Address address = buscarEnderecoPorCep(data.getCep());
 
-        // 2. Monta o objeto Cliente (Padrão Factory)
         return Client.builder()
                 .name(data.getName())
                 .cpf(data.getCpf())
-                .address(address) // Endereço enriquecido
+                .address(address) 
                 .build();
     }
 
     public Address buscarEnderecoPorCep(String cep) {
-        // Chamada externa ao ViaCEP
+
         String url = "https://viacep.com.br/ws/" + cep + "/json/";
         
         ViaCepResponse response = restClient.get()
@@ -50,6 +49,5 @@ public class ClientFactory {
                 .build();
     }
 
-    // Record interno para mapear a resposta do ViaCEP
     record ViaCepResponse(String cep, String logradouro, String bairro, String localidade, String uf) {}
 }

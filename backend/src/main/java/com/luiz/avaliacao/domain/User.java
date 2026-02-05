@@ -36,13 +36,11 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String password;
 
-    // Construtor auxiliar para criarmos usuários manualmente depois
     public User(String login, String password) {
         this.login = login;
         this.password = password;
     }
 
-    // --- Métodos obrigatórios do Spring Security ---
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

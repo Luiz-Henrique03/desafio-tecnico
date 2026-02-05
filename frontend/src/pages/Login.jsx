@@ -6,29 +6,50 @@ function Login() {
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [isVisible, setIsVisible] = useState(false); // Controla a animação
+  const [success, setSuccess] = useState(''); // Mensagem verde de sucesso
+  const [isVisible, setIsVisible] = useState(false); 
+  const [isRegisterMode, setIsRegisterMode] = useState(false); // Alterna entre Login e Cadastro
   const navigate = useNavigate();
 
-  // Ativa a animação assim que a tela carrega
   useEffect(() => {
     setIsVisible(true);
   }, []);
 
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(''); // Limpa erro antigo
+    setError('');
+    setSuccess('');
+
     try {
-      const response = await axios.post('/auth/login', { login, password });
-      localStorage.setItem('token', response.data.token);
-      navigate('/clients');
+      if (isRegisterMode) {
+        // --- MODO CADASTRO ---
+        await axios.post('/auth/register', { login, password });
+        setSuccess('Conta criada com sucesso! Faça login agora.');
+        setIsRegisterMode(false); // Volta para a tela de login
+        setPassword(''); // Limpa a senha por segurança
+      } else {
+        // --- MODO LOGIN ---
+        const response = await axios.post('/auth/login', { login, password });
+        localStorage.setItem('token', response.data.token);
+        navigate('/clients');
+      }
     } catch (err) {
-      setError('Acesso negado. Verifique suas credenciais.');
+      if (isRegisterMode) {
+        setError('Erro ao criar conta. Usuário já existe?');
+      } else {
+        setError('Acesso negado. Verifique suas credenciais.');
+      }
     }
+  };
+
+  const toggleMode = () => {
+    setIsRegisterMode(!isRegisterMode);
+    setError('');
+    setSuccess('');
   };
 
   return (
     <div style={styles.container}>
-      {/* Injeção de CSS para animações e focus dos inputs */}
       <style>
         {`
           @keyframes slideUp {
@@ -47,26 +68,30 @@ function Login() {
           .btn-hover:active {
             transform: translateY(1px);
           }
+          .link-toggle:hover {
+            text-decoration: underline;
+          }
         `}
       </style>
 
-      {/* Card de Login */}
       <div style={{
         ...styles.card,
-        opacity: isVisible ? 1 : 0, // Começa invisível
-        transform: isVisible ? 'translateY(0)' : 'translateY(30px)', // Começa mais pra baixo
-        transition: 'opacity 0.8s ease-out, transform 0.8s ease-out' // A mágica da suavidade
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? 'translateY(0)' : 'translateY(30px)',
+        transition: 'opacity 0.8s ease-out, transform 0.8s ease-out'
       }}>
         
-        {/* Cabeçalho do Card */}
         <div style={{ marginBottom: '30px', textAlign: 'center' }}>
-          <h2 style={{ color: '#333', margin: '0 0 10px 0', fontSize: '24px' }}>Bem-vindo</h2>
-          <p style={{ color: '#666', margin: 0, fontSize: '14px' }}>Insira suas credenciais para acessar</p>
+          <h2 style={{ color: '#333', margin: '0 0 10px 0', fontSize: '24px' }}>
+            {isRegisterMode ? 'Nova Conta' : 'Bem-vindo'}
+          </h2>
+          <p style={{ color: '#666', margin: 0, fontSize: '14px' }}>
+            {isRegisterMode ? 'Preencha os dados para se registrar' : 'Insira suas credenciais para acessar'}
+          </p>
         </div>
 
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
-          {/* Campo Login */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
             <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#555', textTransform: 'uppercase' }}>Usuário</label>
             <input 
@@ -76,10 +101,10 @@ function Login() {
               value={login} 
               onChange={(e) => setLogin(e.target.value)}
               style={styles.input}
+              required
             />
           </div>
 
-          {/* Campo Senha */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
             <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#555', textTransform: 'uppercase' }}>Senha</label>
             <input 
@@ -89,35 +114,41 @@ function Login() {
               value={password} 
               onChange={(e) => setPassword(e.target.value)}
               style={styles.input}
+              required
             />
           </div>
 
-          {/* Botão Entrar */}
           <button 
             type="submit" 
             className="btn-hover"
-            style={styles.button}
+            style={{
+              ...styles.button,
+              background: isRegisterMode ? '#28a745' : '#007bff' // Verde para cadastro, Azul para login
+            }}
           >
-            ENTRAR NO SISTEMA
+            {isRegisterMode ? 'CADASTRAR' : 'ENTRAR NO SISTEMA'}
           </button>
 
-          {/* Mensagem de Erro */}
-          {error && (
-            <div style={styles.errorMessage}>
-              ⚠️ {error}
-            </div>
-          )}
+          {/* Mensagens de Erro e Sucesso */}
+          {error && <div style={styles.errorMessage}>⚠️ {error}</div>}
+          {success && <div style={styles.successMessage}>✅ {success}</div>}
         </form>
 
-        <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '12px', color: '#aaa' }}>
-          &copy; 2026 Sistema de Gestão
+        <div style={{ marginTop: '25px', textAlign: 'center', fontSize: '14px', color: '#666' }}>
+          {isRegisterMode ? 'Já tem uma conta? ' : 'Não tem conta? '}
+          <span 
+            onClick={toggleMode} 
+            className="link-toggle"
+            style={{ color: '#007bff', fontWeight: 'bold', cursor: 'pointer' }}
+          >
+            {isRegisterMode ? 'Fazer Login' : 'Cadastre-se'}
+          </span>
         </div>
       </div>
     </div>
   );
 }
 
-// Estilos em Objeto (CSS-in-JS "raiz")
 const styles = {
   container: {
     height: '100vh',
@@ -125,14 +156,14 @@ const styles = {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    background: '#f0f2f5', // Um cinza bem clarinho elegante
+    background: '#f0f2f5', 
     fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
   },
   card: {
     background: '#ffffff',
     padding: '40px',
     borderRadius: '12px',
-    boxShadow: '0 10px 25px rgba(0,0,0,0.05)', // Sombra suave e moderna
+    boxShadow: '0 10px 25px rgba(0,0,0,0.05)', 
     width: '100%',
     maxWidth: '400px',
     display: 'flex',
@@ -152,14 +183,13 @@ const styles = {
     marginTop: '10px',
     borderRadius: '6px',
     border: 'none',
-    background: '#007bff', // Azul profissional
     color: 'white',
     fontSize: '14px',
     fontWeight: 'bold',
     letterSpacing: '1px',
     cursor: 'pointer',
     transition: 'all 0.2s',
-    boxShadow: '0 4px 6px rgba(0,123,255,0.2)',
+    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
   },
   errorMessage: {
     color: '#d32f2f',
@@ -169,6 +199,15 @@ const styles = {
     fontSize: '13px',
     textAlign: 'center',
     border: '1px solid #ffcdd2',
+  },
+  successMessage: {
+    color: '#155724',
+    background: '#d4edda',
+    padding: '10px',
+    borderRadius: '4px',
+    fontSize: '13px',
+    textAlign: 'center',
+    border: '1px solid #c3e6cb',
   }
 };
 

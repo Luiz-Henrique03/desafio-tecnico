@@ -31,7 +31,6 @@ public class ClientController {
     @Autowired
     private ClientFactory clientFactory; 
 
-    // 1. CRIAR (POST)
     @PostMapping
     public ResponseEntity<?> create(@RequestBody @Valid ClientRequestDTO data) {
         try {
@@ -42,12 +41,10 @@ public class ClientController {
             repository.save(newClient);
             return ResponseEntity.ok(new ClientResponseDTO(newClient));
         } catch (RuntimeException e) {
-            // Captura o erro do CEP e devolve como texto (Bad Request)
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
-    // 2. LISTAR TUDO (GET)
     @GetMapping
     public ResponseEntity<List<ClientResponseDTO>> listAll() {
         var allClients = repository.findAll().stream()
@@ -56,7 +53,6 @@ public class ClientController {
         return ResponseEntity.ok(allClients);
     }
 
-    // 3. ATUALIZAR (PUT) - O que faltava para o botão "Editar" funcionar
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody @Valid ClientRequestDTO data) {
         try {
@@ -70,7 +66,6 @@ public class ClientController {
             client.setName(data.getName());
             client.setCpf(data.getCpf());
 
-            // Se o CEP mudar, tenta buscar o novo
             if (client.getAddress() == null || !client.getAddress().getCep().equals(data.getCep())) {
                 client.setAddress(clientFactory.buscarEnderecoPorCep(data.getCep()));
             }
@@ -82,7 +77,6 @@ public class ClientController {
         }
     }
 
-    // 4. DELETAR (DELETE) - O que faltava para o botão "Excluir" funcionar
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         repository.deleteById(id);

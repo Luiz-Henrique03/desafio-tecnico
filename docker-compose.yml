@@ -1,19 +1,18 @@
-# Serviço do front-end
-
 services:
   backend:
-    build: ./backend       
+    build: ./backend
     container_name: avaliacao-backend
     ports:
       - "8080:8080"
     restart: always
 
-  # Serviço do Frontend
   frontend:
-    build: ./frontend     
+    build: ./frontend
     container_name: avaliacao-frontend
     ports:
       - "5173:5173"
+    environment:
+      - VITE_API_TARGET=http://avaliacao-backend:8080 
     depends_on:
-      - backend            
+      - backend
     restart: always
