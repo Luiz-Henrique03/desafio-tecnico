@@ -6,9 +6,9 @@ function Login() {
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(''); // Mensagem verde de sucesso
+  const [success, setSuccess] = useState('');
   const [isVisible, setIsVisible] = useState(false); 
-  const [isRegisterMode, setIsRegisterMode] = useState(false); // Alterna entre Login e Cadastro
+  const [isRegisterMode, setIsRegisterMode] = useState(false); 
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -22,16 +22,15 @@ function Login() {
 
     try {
       if (isRegisterMode) {
-        // --- MODO CADASTRO ---
         await axios.post('/auth/register', { login, password });
         setSuccess('Conta criada com sucesso! Faça login agora.');
-        setIsRegisterMode(false); // Volta para a tela de login
-        setPassword(''); // Limpa a senha por segurança
+        setIsRegisterMode(false); 
+        setPassword('');
+       
       } else {
-        // --- MODO LOGIN ---
         const response = await axios.post('/auth/login', { login, password });
         localStorage.setItem('token', response.data.token);
-        navigate('/clients');
+        navigate('/clientes');
       }
     } catch (err) {
       if (isRegisterMode) {

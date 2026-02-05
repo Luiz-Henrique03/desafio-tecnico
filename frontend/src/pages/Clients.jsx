@@ -198,11 +198,10 @@ function Clients() {
         {/* CARD DO FORMULÁRIO */}
         <div style={{ 
           ...styles.card, 
-          borderLeft: '5px solid #007bff',
           animation: 'slideDown 0.6s ease-out forwards'
         }}>
           <h3 style={{ marginTop: 0, color: '#444', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {form.id ? '✏️ Editando Cliente' : '✨ Novo Cadastro'}
+            {form.id ? 'Editando Cliente' : 'Novo Cadastro'}
           </h3>
           
           <form onSubmit={handleSave} style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'flex-end' }}>

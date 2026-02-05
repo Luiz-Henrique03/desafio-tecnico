@@ -9,7 +9,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         
         {/* Adicionando a rota de Clientes */}
-        <Route path="/clients" element={<Clients />} />
+        <Route path="/clientes" element={<Clients />} />
         
         {/* Redireciona qualquer outra rota para o login */}
         <Route path="*" element={<Navigate to="/login" />} />
